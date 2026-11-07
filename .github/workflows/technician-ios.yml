@@ -33,16 +33,23 @@ jobs:
         working-directory: ios
         run: pod install --repo-update
 
-      - name: Install Apple signing credentials
+      - name: Decode signing certificate
         env:
           IOS_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${IOS_CERTIFICATE_BASE64:?Missing IOS_CERTIFICATE_BASE64 secret}"
+          printf '%s' "$IOS_CERTIFICATE_BASE64" | base64 --decode > "$RUNNER_TEMP/distribution.p12"
+
+      - name: Install Apple signing credentials
+        env:
           IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
           IOS_PROFILE_BASE64: ${{ secrets.IOS_PROFILE_BASE64 }}
         shell: bash
         run: |
           set -euo pipefail
 
-          : "${IOS_CERTIFICATE_BASE64:?Missing IOS_CERTIFICATE_BASE64 secret}"
           : "${IOS_CERTIFICATE_PASSWORD:?Missing IOS_CERTIFICATE_PASSWORD secret}"
           : "${IOS_PROFILE_BASE64:?Missing IOS_PROFILE_BASE64 secret}"
 
@@ -57,7 +64,6 @@ jobs:
           echo "PROFILE_PATH=$PROFILE_PATH" >> "$GITHUB_ENV"
           echo "BUNDLE_ID=$BUNDLE_ID" >> "$GITHUB_ENV"
 
-          printf '%s' "$IOS_CERTIFICATE_BASE64" | base64 --decode > "$CERTIFICATE_PATH"
           printf '%s' "$IOS_PROFILE_BASE64" | base64 --decode > "$PROFILE_PATH"
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
