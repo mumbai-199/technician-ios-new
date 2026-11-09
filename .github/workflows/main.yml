@@ -12,6 +12,7 @@ permissions:
 jobs:
   build-ipa:
     name: Build and export signed IPA
+    environment: ios-production # Replace with the exact GitHub Environment name
     runs-on: macos-latest
     timeout-minutes: 60
 
@@ -42,8 +43,18 @@ jobs:
           : "${IOS_CERTIFICATE_BASE64:?Missing IOS_CERTIFICATE_BASE64 secret}"
           printf '%s' "$IOS_CERTIFICATE_BASE64" | base64 --decode > "$RUNNER_TEMP/distribution.p12"
 
-      - name: Check decoded certificate fingerprint
-        run: openssl dgst -sha256 "$RUNNER_TEMP/distribution.p12"
+      - name: Validate decoded certificate and password
+        env:
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${IOS_CERTIFICATE_PASSWORD:?Missing IOS_CERTIFICATE_PASSWORD secret}"
+          shasum -a 256 "$RUNNER_TEMP/distribution.p12"
+          openssl pkcs12 \
+            -in "$RUNNER_TEMP/distribution.p12" \
+            -info -noout \
+            -passin env:IOS_CERTIFICATE_PASSWORD
 
       - name: Install Apple signing credentials
         env:
