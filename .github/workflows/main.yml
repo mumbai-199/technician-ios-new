@@ -148,7 +148,6 @@ jobs:
             <string>$TEAM_ID</string>
             <key>signingStyle</key>
             <string>manual</string>
-            <key>provisioningProfiles</key>
             <dict>
               <key>$BUNDLE_ID</key>
               <string>$PROFILE_NAME</string>
