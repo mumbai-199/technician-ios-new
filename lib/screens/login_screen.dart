@@ -402,7 +402,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
         final technicianId = int.tryParse('${result['data']['id']}');
         if (technicianId != null) {
-          await NotificationService.registerTechnician(technicianId);
+          try {
+            await NotificationService.registerTechnician(technicianId);
+          } catch (error, stackTrace) {
+            debugPrint('Unable to register push notifications: $error');
+            debugPrintStack(stackTrace: stackTrace);
+          }
         }
 
         if (!mounted) return;
