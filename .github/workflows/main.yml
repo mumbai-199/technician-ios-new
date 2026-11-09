@@ -161,6 +161,42 @@ jobs:
             -exportPath build/ios/ipa \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
 
+      - name: Upload IPA to App Store Connect
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_P8_BASE64: ${{ secrets.APP_STORE_CONNECT_P8_BASE64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          : "${APP_STORE_CONNECT_KEY_ID:?Missing APP_STORE_CONNECT_KEY_ID}"
+          : "${APP_STORE_CONNECT_ISSUER_ID:?Missing APP_STORE_CONNECT_ISSUER_ID}"
+          : "${APP_STORE_CONNECT_P8_BASE64:?Missing APP_STORE_CONNECT_P8_BASE64}"
+
+          IPA_PATH="$(find build/ios/ipa -maxdepth 1 -name '*.ipa' -print -quit)"
+          : "${IPA_PATH:?No IPA found}"
+
+          KEY_FILE="$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
+          API_KEY_JSON="$RUNNER_TEMP/app-store-connect-api-key.json"
+          trap 'rm -f "$KEY_FILE" "$API_KEY_JSON"' EXIT
+
+          printf '%s' "$APP_STORE_CONNECT_P8_BASE64" | base64 --decode > "$KEY_FILE"
+
+          jq -n \
+            --arg key_id "$APP_STORE_CONNECT_KEY_ID" \
+            --arg issuer_id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --rawfile key "$KEY_FILE" \
+            '{key_id: $key_id, issuer_id: $issuer_id, key: $key, in_house: false}' \
+            > "$API_KEY_JSON"
+
+          sudo gem install fastlane --no-document
+
+          fastlane pilot upload \
+            --ipa "$IPA_PATH" \
+            --api_key_path "$API_KEY_JSON" \
+            --skip_waiting_for_build_processing
+
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
