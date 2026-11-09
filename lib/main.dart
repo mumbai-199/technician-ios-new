@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -11,14 +13,22 @@ import 'screens/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await AppLanguage.instance.load();
+  try {
+    await AppLanguage.instance.load();
+  } catch (error, stackTrace) {
+    debugPrint('Unable to load saved language: $error');
+    debugPrintStack(stackTrace: stackTrace);
+  }
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  if (!kIsWeb) {
-    await NotificationService.initialize();
+  var firebaseInitialized = false;
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    firebaseInitialized = true;
+  } catch (error, stackTrace) {
+    debugPrint('Firebase initialization failed: $error');
+    debugPrintStack(stackTrace: stackTrace);
   }
 
   // Set preferred orientations
@@ -36,6 +46,19 @@ Future<void> main() async {
   );
 
   runApp(const PestControlApp());
+
+  if (firebaseInitialized && !kIsWeb) {
+    unawaited(_initializeNotifications());
+  }
+}
+
+Future<void> _initializeNotifications() async {
+  try {
+    await NotificationService.initialize();
+  } catch (error, stackTrace) {
+    debugPrint('Push notification initialization failed: $error');
+    debugPrintStack(stackTrace: stackTrace);
+  }
 }
 
 class PestControlApp extends StatelessWidget {
