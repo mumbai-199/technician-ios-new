@@ -67,7 +67,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '822350748333',
     projectId: 'pest-control-64776',
     storageBucket: 'pest-control-64776.firebasestorage.app',
-    iosBundleId: 'com.example.tempIosConfig',
+    iosBundleId: 'com.fortuneitcorp.integrity',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
