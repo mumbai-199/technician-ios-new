@@ -143,11 +143,12 @@ jobs:
           <plist version="1.0">
           <dict>
             <key>method</key>
-            <string>app-store-connect</string>
+            <string>app-store</string>
             <key>teamID</key>
             <string>$TEAM_ID</string>
             <key>signingStyle</key>
             <string>manual</string>
+            <key>provisioningProfiles</key>
             <dict>
               <key>$BUNDLE_ID</key>
               <string>$PROFILE_NAME</string>
