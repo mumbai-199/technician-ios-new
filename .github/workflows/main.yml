@@ -128,6 +128,8 @@ jobs:
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/Technician.xcarchive" \
             archive \
+            FLUTTER_BUILD_NAME=1.0.0 \
+            FLUTTER_BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
             
       - name: Export signed IPA
         run: |
